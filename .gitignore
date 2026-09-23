@@ -1,0 +1,30 @@
+# Secrets and environment files
+.env
+.env.*
+!.env.example
+
+src/config.local.php
+config.local.php
+
+secrets/
+*.key
+*.pem.key
+
+# Logs
+logs/
+*.log
+
+# Local/test files
+test_push.php
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Dependencies / builds
+node_modules/
+dist/
+build/
+.output/
