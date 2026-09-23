@@ -1,0 +1,62 @@
+name: Deploy OI Pulse to Hostinger Test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Hostinger test directory
+        env:
+          HOSTINGER_HOST: ${{ secrets.HOSTINGER_HOST }}
+          HOSTINGER_USER: ${{ secrets.HOSTINGER_USER }}
+          HOSTINGER_PORT: ${{ secrets.HOSTINGER_PORT }}
+          HOSTINGER_SSH_KEY: ${{ secrets.HOSTINGER_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          printf '%s\n' "$HOSTINGER_SSH_KEY" > ~/.ssh/hostinger_key
+          chmod 600 ~/.ssh/hostinger_key
+
+          ssh-keyscan -p "$HOSTINGER_PORT" "$HOSTINGER_HOST" >> ~/.ssh/known_hosts
+
+          ssh \
+            -i ~/.ssh/hostinger_key \
+            -p "$HOSTINGER_PORT" \
+            "$HOSTINGER_USER@$HOSTINGER_HOST" \
+            'bash -s' <<'REMOTE_SCRIPT'
+
+          set -e
+
+          DEPLOY_DIR="/home/u511170512/oi-pulse-git-test"
+          REPO_URL="https://github.com/KarthikM-P/oi-pulse.git"
+
+          mkdir -p "$DEPLOY_DIR"
+
+          if [ -d "$DEPLOY_DIR/.git" ]; then
+              echo "Existing Git repository found."
+              cd "$DEPLOY_DIR"
+              git fetch origin
+              git reset --hard origin/main
+              git clean -fd
+          else
+              echo "Cloning repository..."
+              rm -rf "$DEPLOY_DIR"
+              git clone "$REPO_URL" "$DEPLOY_DIR"
+          fi
+
+          cd "$DEPLOY_DIR"
+
+          echo "Deployment completed."
+          echo "Commit deployed:"
+          git rev-parse HEAD
+
+          echo "Files deployed:"
+          ls -la
+
+          REMOTE_SCRIPT
